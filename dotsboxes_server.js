@@ -52,6 +52,7 @@ wss.on("connection", function(conn) {
 					whose_turn:0,
 					PLAYERID_COUNT:0,
 					password:"",
+					admin_token:randomString(12),
 					
 					width:request.width,
 					height:request.height,
@@ -60,6 +61,9 @@ wss.on("connection", function(conn) {
 				};
 					
 				games[request.roomname] = newgame;
+				
+				var response = {type:"CREATE", ok:true, admintoken:newgame.admin_token};
+				conn.send(JSON.stringify(response));
 				
 				break;
 			case "JOIN":
@@ -83,16 +87,29 @@ wss.on("connection", function(conn) {
 					return;
 				}
 				
-				
-				
 				var newplayer = {
 					username:request.username,
 					conn:conn,
 					playerid:PLAYERID_COUNT,
 					token:randomString(6),
-					roomname:request.roomname
+					roomname:request.roomname,
+					isplayer:true
 				};
 				PLAYERID_COUNT+=1;
+				
+				// send ADD packet to all existing players in the room
+				var add_packet = {
+					type:"ADD",
+					playerid:newplayer.playerid,
+					username:newplayer.username,
+					isplayer:newplayer.isplayer
+				};
+				for( var index in game.players ){
+					var player = game.players[index];
+					player.conn.send(JSON.stringify(add_packet));
+				}
+				
+				game.players.push(newplayer);
 				
 				var response = {
 					type:"JOIN",
@@ -102,7 +119,84 @@ wss.on("connection", function(conn) {
 				};
 				
 				conn.send(JSON.stringify(response));
+				
+				conn.send(JSON.stringify( generateBoardPacket() ));
+				
+				break;
+			case "SPECTATE":
+				if( request.username.length() < 4 || request.username.length() > 16){
+					var response = {type:"SPECTATE", ok:false, message:"username too short or long (4-16 characters)"};
+					conn.send(JSON.stringify(response));
+					return;
+				}
+				
+				if( !(request.roomname in games) ){
+					var response = {type:"SPECTATE", ok:false, message:"room does not exist or roomname incorrect"};
+					conn.send(JSON.stringify(response));
+					return;
+				}
+				
+				var game = games[request.roomname];
+				
+				var newspectator = {
+					username:request.username,
+					conn:conn,
+					playerid:PLAYERID_COUNT,
+					roomname:request.roomname,
+					isplayer:false
+				};
+				PLAYERID_COUNT+=1;
+				
+				// send ADD packet to all existing players in the room
+				var add_packet = {
+					type:"ADD",
+					playerid:newspectator.playerid,
+					username:newspectator.username,
+					isplayer:newspectator.isplayer
+				};
+				for( var index in game.players ){
+					var player = game.players[index];
+					player.conn.send(JSON.stringify(add_packet));
+				}
+				
+				game.players.push(newspectator);
+				
+				var response = {
+					type:"SPECTATE",
+					ok:true,
+					playerid:newspectator.playerid
+				};
+				
+				conn.send(JSON.stringify(response));
+				conn.send(JSON.stringify( generateBoardPacket() ));
+				break;
+			case "BOARD":
+				conn.send(JSON.stringify( generateBoardPacket() ));
 				break;
 		}
 	});
 });
+
+function generateBoardPacket(roomname) {
+	var game = games[roomname];
+	var _players = {}, _spectators = {};
+	for( var index in game.players ){
+		var player = game.players[index];
+		if( player.isplayer )
+			_players[player.playerid] = player.username;
+		else
+			_spectators[player.playerid] = player.username;
+	}
+	
+	return {
+		type:"BOARD",
+		gamestate:game.state,
+		width:game.width,
+		height:game.height,
+		players:_players,
+		spectators,
+		lines:game.lines,
+		captures:game.captures
+	};
+}
+
