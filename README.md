@@ -1,6 +1,16 @@
 # happyboxes-saddots
 Node.js server for a 2+ multiplayer dots &amp; boxes game.
 
+## TODO
+
+ - Write a proper testing client.
+ - Implement chat.
+ - Implement admin's kicking function.
+ - Handle players leaving.
+ - Start drawing the board.
+ - Implement readying up.
+ - And so much more!
+
 ## Network Protocol
 
 Transmission of JSON strings back and forth, over a websocket (due to the recent shortage of messenger pigeons).
