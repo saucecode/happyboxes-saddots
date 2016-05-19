@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>happyboxes-saddots game</title>
+		<meta charset="utf-8" />
+		<script type="text/javascript" src="./client.js"></script>
+	</head>
+	
+	<body>
+		<canvas id="canvas" width=800 height=500 style="border:1px solid black;"></canvas>
+		<div>
+			<p>Fun buttons!</p>
+			<input type="button" value="connect to server" onclick="connect();"/><br/><br/>
+			
+			Create a room:<br/>
+			Room name:
+			<input type="text" id="roomname" />
+			<input type="button" value="create room" onclick="createRoom();"/><br/><br/>
+			
+			Join a room:<br/>
+			Username: <input type="text" id="username" />
+			Room name: <input type="text" id="roomname" />
+			<input type="button" value="Join as Player" onclick="joinroom(true);" />
+			<input type="button" value="Join as Spectator" onclick="joinroom(false);" />
+		</div>
+		<div>
+			<p id="chatbox">The chatbox goes here</p>
+		</div>
+	</body>
+</html>
+
