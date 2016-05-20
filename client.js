@@ -35,8 +35,13 @@ function createRoom(){
 	var roomname = document.getElementById("c_roomname").value;
 	var width = parseInt(document.getElementById("c_width").value);
 	var height = parseInt(document.getElementById("c_height").value);
-	var passoword = document.getElementById("c_password").value;
-	var packet = { type:"CREATE", password:password, width:width, height:height };
+	var password = document.getElementById("c_password").value;
+	var packet = {
+		type:"CREATE",
+		password:password,
+		width:width,
+		height:height
+	};
 	connection.send( JSON.stringify(packet) );
 }
 
