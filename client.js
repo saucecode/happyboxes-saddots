@@ -4,6 +4,7 @@ function init(){
 	connect();
 		// start the canvas thing only if connection successful
 	connection.onopen = function(evt){
+		logToPage("Connected to server", true);
 		update();
 	}
 	connection.onmesage = function(evt) {
@@ -29,6 +30,15 @@ function processPacket(packet){
 function update(){
 	context.strokeRect(64,64,32,32);
 }
+
+function createRoom(){
+	var roomname = document.getElementById("c_roomname").value;
+	var width = parseInt(document.getElementById("c_width").value);
+	var height = parseInt(document.getElementById("c_height").value);
+	var passoword = document.getElementById("c_password").value;
+	var packet = { type:"CREATE", password:password, width:width, height:height };
+}
+	connection.send( JSON.stringify(packet) );
 
 function logToPage(msg, logConsole){
 	var elm = document.getElementById("logbox");

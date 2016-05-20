@@ -8,12 +8,14 @@ function randomString(len){
 var WebSocketServer = require('ws').Server;
 var WebSocket = require('ws').WebSocket;
 
-wss = new WebSocketServer({port:45954});
+wss = new WebSocketServer({port:25565});
 
 users = {};
 games = {};
 
 wss.on("connection", function(conn) {
+	console.log("Jag fick ett samband från " + conn.address);
+
 	wss.on("message", function(message){
 		var request = null;
 		try{
