@@ -115,11 +115,12 @@ Request the state of the board, and the scores.
 `captures` is an array of owned/captured boxes, defined by a set of arrays like `[x,y,playerid]`.
 
     Request:
-	{ type:"BOARD" }
+	{ type:"BOARD", roomname:"theoffice" }
 
 	Response:
 	{
 	    type:"BOARD",
+	    roomname:"theoffice",
 	    gamestate:"waiting for players",
 	    width:7,
 	    height:7,
