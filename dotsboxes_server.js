@@ -9,6 +9,7 @@ var WebSocketServer = require('ws').Server;
 var WebSocket = require('ws').WebSocket;
 
 wss = new WebSocketServer({port:25565});
+PLAYERID_COUNT = 0;
 
 users = {};
 games = {};
@@ -85,10 +86,12 @@ wss.on("connection", function(conn) {
 				
 				var game = games[request.roomname];
 				
-				if( !(game.password != "" && request.password == game.password) ){
-					var response = {type:"JOIN", ok:false, message:"incorrect password"};
-					conn.send(JSON.stringify(response));
-					return;
+				if( game.password != "" ){
+					if( request.password != game.password ){
+						var response = {type:"JOIN", ok:false, message:"incorrect password"};
+						conn.send(JSON.stringify(response));
+						return;
+					}
 				}
 				
 				var newplayer = {
@@ -124,7 +127,7 @@ wss.on("connection", function(conn) {
 				
 				conn.send(JSON.stringify(response));
 				
-				conn.send(JSON.stringify( generateBoardPacket() ));
+				conn.send(JSON.stringify( generateBoardPacket(game.roomname) ));
 				
 				break;
 			case "SPECTATE":
@@ -172,10 +175,10 @@ wss.on("connection", function(conn) {
 				};
 				
 				conn.send(JSON.stringify(response));
-				conn.send(JSON.stringify( generateBoardPacket() ));
+				conn.send(JSON.stringify( generateBoardPacket(request.roomname) ));
 				break;
 			case "BOARD":
-				conn.send(JSON.stringify( generateBoardPacket() ));
+				conn.send(JSON.stringify( generateBoardPacket(request.roomname) ));
 				break;
 		}
 	});
@@ -194,11 +197,12 @@ function generateBoardPacket(roomname) {
 	
 	return {
 		type:"BOARD",
+		roomname:roomname,
 		gamestate:game.state,
 		width:game.width,
 		height:game.height,
 		players:_players,
-		spectators,
+		spectators:_spectators,
 		lines:game.lines,
 		captures:game.captures
 	};

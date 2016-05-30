@@ -2,7 +2,7 @@ function init(){
 	var element = document.getElementById('canvas');
 	context = element.getContext('2d');
 	connect();
-		// start the canvas thing only if connection successful
+	// start the canvas thing only if connection successful
 	connection.onopen = function(evt){
 		logToPage("Connected to server", true);
 		update();
@@ -19,12 +19,49 @@ function init(){
 
 HOST = "ws://192.168.51.202:25565/";
 
+ROOMNAME = null;
+TOKEN = null;
+ISPLAYER = false;
+PLAYERID = null;
+AUTHTOKEN = null;
+USERNAME = null;
+
 function connect(){
 	connection = new WebSocket(HOST);
 }
 
 function processPacket(packet){
 	logToPage("Received packet: " + JSON.stringify(packet), true);
+	
+	switch(packet.type){
+		case "CREATE":
+			if( packet.ok ){
+				ADMINTOKEN = packet.admintoken;
+			}
+			
+			break;
+		case "JOIN":
+			if( packet.ok ){
+				ISPLAYER = true;
+				TOKEN = packet.token;
+				PLAYERID = packet.playerid;
+			}
+			
+			break;
+		
+		case "SPECTATE":
+			if( packet.ok ){
+				ISPLAYER = false;
+			}
+			
+			break;
+		
+		case "BOARD":
+			document.getElementById("roomstatus").innerHTML = packet.gamestate;
+			document.getElementById("roomname").innerHTML = packet.roomname + " - " + (ISPLAYER ? "playing" : "spectating");
+			ROOMNAME = packet.roomname;
+			break;
+	}
 }
 
 function update(){
@@ -44,6 +81,24 @@ function createRoom(){
 		height:height
 	};
 	connection.send( JSON.stringify(packet) );
+}
+
+function joinRoom(asPlayer){
+	var roomname = document.getElementById("j_roomname").value;
+	var username = document.getElementById("j_username").value;
+	var password = document.getElementById("j_password").value;
+	
+	logToPage("Attempting to join room " + roomname + " as " + username + "...");
+	
+	var packet = {
+		type: asPlayer ? "JOIN" : "SPECTATE",
+		roomname: roomname,
+		username:username,
+		password:password
+	};
+	
+	connection.send(JSON.stringify( packet ));
+	USERNAME = username;
 }
 
 function logToPage(msg, logConsole){
