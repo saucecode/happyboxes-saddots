@@ -7,9 +7,9 @@ function init(){
 		logToPage("Connected to server", true);
 		update();
 	}
-	connection.onmesage = function(evt) {
+	connection.onmessage = function(evt) {
 		try{
-			processPacket(JSON.prase(evt.data));
+			processPacket(JSON.parse(evt.data));
 		}catch(err){
 			console.log("Error on message reception:")
 			console.log(err);
@@ -17,7 +17,7 @@ function init(){
 	}
 }
 
-HOST = "ws://pogithedog.ddns.net:25565/";
+HOST = "ws://192.168.51.202:25565/";
 
 function connect(){
 	connection = new WebSocket(HOST);
@@ -38,6 +38,7 @@ function createRoom(){
 	var password = document.getElementById("c_password").value;
 	var packet = {
 		type:"CREATE",
+		roomname:roomname,
 		password:password,
 		width:width,
 		height:height

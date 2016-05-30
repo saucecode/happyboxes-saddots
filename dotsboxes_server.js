@@ -2,7 +2,7 @@
 
 function randomString(len){
 	var s = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	return Array(N).join().split(',').map(function() { return s.charAt(Math.floor(Math.random() * s.length)); }).join('');
+	return Array(len).join().split(',').map(function() { return s.charAt(Math.floor(Math.random() * s.length)); }).join('');
 }
 
 var WebSocketServer = require('ws').Server;
@@ -14,9 +14,9 @@ users = {};
 games = {};
 
 wss.on("connection", function(conn) {
-	console.log("Jag fick ett samband från " + conn.address);
+	console.log("Conneciton opened.");
 
-	wss.on("message", function(message){
+	conn.on("message", function(message){
 		var request = null;
 		try{
 			request = JSON.parse(message);
@@ -27,9 +27,11 @@ wss.on("connection", function(conn) {
 			return;
 		}
 		
+		console.log("Packet received: " + message);
+		
 		switch(request.type){
 			case "CREATE":
-				if( request.roomname.length() < 4 ){
+				if( request.roomname.length < 4 ){
 					var response = {type:"CREATE", ok:false, message:"room name too short"};
 					conn.send(JSON.stringify(response));
 					return;
@@ -61,7 +63,7 @@ wss.on("connection", function(conn) {
 					lines:[],
 					captures:[]
 				};
-					
+				
 				games[request.roomname] = newgame;
 				
 				var response = {type:"CREATE", ok:true, admintoken:newgame.admin_token};
@@ -69,7 +71,7 @@ wss.on("connection", function(conn) {
 				
 				break;
 			case "JOIN":
-				if( request.username.length() < 4 || request.username.length() > 16){
+				if( request.username.length < 4 || request.username.length > 16){
 					var response = {type:"JOIN", ok:false, message:"username too short or long (4-16 characters)"};
 					conn.send(JSON.stringify(response));
 					return;
@@ -126,7 +128,7 @@ wss.on("connection", function(conn) {
 				
 				break;
 			case "SPECTATE":
-				if( request.username.length() < 4 || request.username.length() > 16){
+				if( request.username.length < 4 || request.username.length > 16){
 					var response = {type:"SPECTATE", ok:false, message:"username too short or long (4-16 characters)"};
 					conn.send(JSON.stringify(response));
 					return;
