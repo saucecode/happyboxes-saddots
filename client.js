@@ -29,6 +29,8 @@ PLAYERID = null;
 ADMINTOKEN = null;
 USERNAME = null;
 
+board = {};
+
 function connect(){
 	connection = new WebSocket(HOST);
 }
@@ -63,12 +65,29 @@ function processPacket(packet){
 			document.getElementById("roomstatus").innerHTML = packet.gamestate;
 			document.getElementById("roomname").innerHTML = packet.roomname + " - " + (ISPLAYER ? "playing" : "spectating");
 			ROOMNAME = packet.roomname;
+			
+			board.width = packet.width;
+			board.height = packet.height;
+			board.lines = packet.lines;
+			update();
 			break;
 	}
 }
 
 function update(){
 	context.strokeRect(64,64,32,32);
+	drawBoard();
+}
+
+function drawBoard(){
+	var offset = 4;
+	var gap = 24;
+	context.fillStyle = "black";
+	for( var x=0; x<board.width*gap; x+=gap ){
+		for( var y=0; y<board.height*gap; y+=gap ){
+			context.fillRect(offset + x-2, offset + y-2, 4, 4);
+		}
+	}
 }
 
 function createRoom(){
