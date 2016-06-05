@@ -7,12 +7,12 @@ Node.js server for a 2+ multiplayer dots &amp; boxes game.
  - Implement admin's kicking function.
  - Handle players leaving.
  - Start drawing the board.
- - Implement readying up.
  - And so much more!
 
 ## DONE
  - Write a proper testing client.
  - Get rid of player tokens.
+ - Implement readying up.
 
 ## Network Protocol
 
@@ -22,7 +22,7 @@ First, someone must create a room with a `CREATE` packet. This sets the room's d
 
 The initial gamestate is set as "waiting for players" (to ready up). Players must send a `READY` packet to update their ready-state. When all players are ready, a `GAMESTATE` packet is broadcast with state "about to start" and a 5 second countdown is started. Players may unready themselves in this time. At the end of the 5 seconds, the state is changed to "started".
 
-A player can join/leave at any time. When this occurs, the server sends an `ADD` or `REMOVE` packet, respectively.
+Once a game has started, new players cannot join.
 
 When the game starts, a `TURN` packet is broadcast, with the playerid whose turn it is. This player now must make a turn by sending a valid `MOVE` packet. Once a valid move is made, it is broadcast to all players/spectators, and a `TURN` packet is broadcast again, for the next player.
 
