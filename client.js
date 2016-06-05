@@ -52,6 +52,7 @@ function processPacket(packet){
 		case "SPECTATE":
 			if( packet.ok ){
 				ISPLAYER = false;
+				PLAYERID = packet.playerid;
 			}
 			
 			break;
