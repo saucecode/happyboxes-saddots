@@ -23,7 +23,6 @@ function init(){
 HOST = "ws://192.168.51.202:25565/";
 
 ROOMNAME = null;
-TOKEN = null;
 ISPLAYER = false;
 READYSTATE = false;
 PLAYERID = null;
@@ -47,7 +46,6 @@ function processPacket(packet){
 		case "JOIN":
 			if( packet.ok ){
 				ISPLAYER = true;
-				TOKEN = packet.token;
 				PLAYERID = packet.playerid;
 			}
 			

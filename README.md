@@ -3,7 +3,6 @@ Node.js server for a 2+ multiplayer dots &amp; boxes game.
 
 ## TODO
 
- - Get rid of player tokens.
  - Implement chat.
  - Implement admin's kicking function.
  - Handle players leaving.
@@ -13,6 +12,7 @@ Node.js server for a 2+ multiplayer dots &amp; boxes game.
 
 ## DONE
  - Write a proper testing client.
+ - Get rid of player tokens.
 
 ## Network Protocol
 

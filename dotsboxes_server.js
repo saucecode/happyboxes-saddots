@@ -103,7 +103,6 @@ wss.on("connection", function(conn) {
 					username:request.username,
 					conn:conn,
 					playerid:PLAYERID_COUNT,
-					token:randomString(6),
 					roomname:request.roomname,
 					isplayer:true,
 					ready:false
@@ -128,8 +127,7 @@ wss.on("connection", function(conn) {
 				var response = {
 					type:"JOIN",
 					ok:true,
-					playerid:newplayer.playerid,
-					token:newplayer.token
+					playerid:newplayer.playerid
 				};
 				
 				conn.send(JSON.stringify(response));
@@ -192,7 +190,8 @@ wss.on("connection", function(conn) {
 				conn.send(JSON.stringify( generateBoardPacket(request.roomname) ));
 				break;
 			case "BOARD":
-				conn.send(JSON.stringify( generateBoardPacket(request.roomname) ));
+				if( !( "player" in conn ) ) return;
+				conn.send(JSON.stringify( generateBoardPacket(conn.player.roomname) ));
 				break;
 			
 			case "READY":
