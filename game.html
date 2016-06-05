@@ -26,7 +26,8 @@
 			Room name: <input type="text" id="j_roomname" />
 			Room pass: <input type="text" id="j_password" />
 			<input type="button" value="Join as Player" onclick="joinRoom(true);" />
-			<input type="button" value="Join as Spectator" onclick="joinRoom(false);" />
+			<input type="button" value="Join as Spectator" onclick="joinRoom(false);" /><br/>
+			<input type="button" id="readybutton" value="Ready: false" onclick="toggleReady();" />
 		</div>
 		<div>
 			<p id="chatbox">The chatbox goes here</p>
