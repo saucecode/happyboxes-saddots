@@ -11,7 +11,6 @@ var WebSocket = require('ws').WebSocket;
 wss = new WebSocketServer({port:25565});
 PLAYERID_COUNT = 0;
 
-users = {};
 games = {};
 
 wss.on("connection", function(conn) {
@@ -84,6 +83,12 @@ wss.on("connection", function(conn) {
 					return;
 				}
 				
+				if( "player" in conn ){
+					var response = {type:"JOIN", ok:false, message:"you've already joined a game. reload the page."};
+					conn.send(JSON.stringify(response));
+					return;
+				}
+				
 				var game = games[request.roomname];
 				
 				if( game.password != "" ){
@@ -103,6 +108,7 @@ wss.on("connection", function(conn) {
 					isplayer:true
 				};
 				PLAYERID_COUNT+=1;
+				conn.player = newplayer;
 				
 				// send ADD packet to all existing players in the room
 				var add_packet = {
@@ -143,6 +149,12 @@ wss.on("connection", function(conn) {
 					return;
 				}
 				
+				if( "player" in conn ){
+					var response = {type:"SPECTATE", ok:false, message:"you've already joined a game. reload the page."};
+					conn.send(JSON.stringify(response));
+					return;
+				}
+				
 				var game = games[request.roomname];
 				
 				var newspectator = {
@@ -153,6 +165,7 @@ wss.on("connection", function(conn) {
 					isplayer:false
 				};
 				PLAYERID_COUNT+=1;
+				conn.player = newspectator;
 				
 				// send ADD packet to all existing players in the room
 				var add_packet = {
@@ -179,6 +192,10 @@ wss.on("connection", function(conn) {
 				break;
 			case "BOARD":
 				conn.send(JSON.stringify( generateBoardPacket(request.roomname) ));
+				break;
+			
+			case "READY":
+				
 				break;
 		}
 	});
