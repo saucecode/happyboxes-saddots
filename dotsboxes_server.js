@@ -105,7 +105,8 @@ wss.on("connection", function(conn) {
 					playerid:PLAYERID_COUNT,
 					token:randomString(6),
 					roomname:request.roomname,
-					isplayer:true
+					isplayer:true,
+					ready:false
 				};
 				PLAYERID_COUNT+=1;
 				conn.player = newplayer;
@@ -195,7 +196,14 @@ wss.on("connection", function(conn) {
 				break;
 			
 			case "READY":
+				if( !("player" in conn) ) return;
+				if( conn.player.isplayer == false ) return;
 				
+				var json_response = JSON.stringify({ type:"READY", ready:request.ready, playerid:conn.player.playerid });
+				var room = games[ conn.player.roomname ];
+				for( playerid in room.players ){
+					room.players[playerid].conn.send(json_response);
+				}
 				break;
 		}
 	});

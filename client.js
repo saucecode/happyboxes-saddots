@@ -25,8 +25,9 @@ HOST = "ws://192.168.51.202:25565/";
 ROOMNAME = null;
 TOKEN = null;
 ISPLAYER = false;
+READYSTATE = false;
 PLAYERID = null;
-AUTHTOKEN = null;
+ADMINTOKEN = null;
 USERNAME = null;
 
 function connect(){
@@ -106,7 +107,11 @@ function joinRoom(asPlayer){
 }
 
 function toggleReady(){
-	
+	READYSTATE = !READYSTATE;
+	document.getElementById("readybutton").value = "Ready: " + READYSTATE;
+	// commence getting rid of TOKENs.
+	var packet = {type:"READY", ready:READYSTATE };
+	connection.send(JSON.stringify(packet));
 }
 
 function logToPage(msg, logConsole){
