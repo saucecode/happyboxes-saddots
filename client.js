@@ -15,6 +15,9 @@ function init(){
 			console.log(err);
 		}
 	}
+	connection.onclose = function(evt) {
+		logToPage("Connection lost.", true);
+	}
 }
 
 HOST = "ws://192.168.51.202:25565/";
@@ -100,6 +103,10 @@ function joinRoom(asPlayer){
 	
 	connection.send(JSON.stringify( packet ));
 	USERNAME = username;
+}
+
+function toggleReady(){
+	
 }
 
 function logToPage(msg, logConsole){
