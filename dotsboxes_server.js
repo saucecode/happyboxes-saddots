@@ -142,7 +142,7 @@ wss.on("connection", function(conn) {
 					return;
 				}
 				
-				if( !(request.roomname in room) ){
+				if( !(request.roomname in rooms) ){
 					var response = {type:"SPECTATE", ok:false, message:"room does not exist or roomname incorrect"};
 					conn.send(JSON.stringify(response));
 					return;
@@ -297,7 +297,7 @@ function sendToRoom(json_string, roomname){
 function generateBoardPacket(roomname) {
 	var room = rooms[roomname];
 	var _players = {}, _spectators = {};
-	for( var index in rooms.players ){
+	for( var index in room.players ){
 		var player = room.players[index];
 		if( player.isplayer )
 			_players[player.playerid] = player.username;
