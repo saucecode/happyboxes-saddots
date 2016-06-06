@@ -30,6 +30,8 @@ ADMINTOKEN = null;
 USERNAME = null;
 
 board = {};
+players = {}; // players[playerid] = {playerid:0, username:"tarty baked goods", ready:true}
+spectators = [];
 
 function connect(){
 	connection = new WebSocket(HOST);
@@ -66,10 +68,40 @@ function processPacket(packet){
 			document.getElementById("roomname").innerHTML = packet.roomname + " - " + (ISPLAYER ? "playing" : "spectating");
 			ROOMNAME = packet.roomname;
 			
+			for( playerid in packet.players ){
+				players[playerid] = {playerid:playerid, username:packet.players[playerid], ready:false};
+			}
+			
+			for( spectatorid in packet.spectators ){
+				spectators.push(packet.spectators[spectatorid]);
+			}
+			
+			updatePlayerList();
+			updateSpectatorList();
+			
 			board.width = packet.width;
 			board.height = packet.height;
 			board.lines = packet.lines;
 			update();
+			break;
+		case "ADD":
+			if( packet.isplayer ){
+				players[packet.playerid] = {playerid:packet.playerid, username:packet.username, ready:false};
+			}else{
+				spectators.push(packet.username);
+			}
+			updatePlayerList();
+			updateSpectatorList();
+			
+			break;
+		case "REMOVE":
+			if( packet.playerid in players ){
+				delete players[packet.playerid];
+				updatePlayerList();
+			}else if( packet.playerid in spectators ){
+				delete spectators[packet.playerid];
+				updateSpectatorList();
+			}
 			break;
 	}
 }
@@ -77,6 +109,18 @@ function processPacket(packet){
 function update(){
 	context.strokeRect(64,64,32,32);
 	drawBoard();
+}
+
+function updatePlayerList(){
+	var out = [];
+	for( playerid in players ){
+		out.push(players[playerid].username + "(" + (players[playerid].ready ? "ready" : "not ready") + ")");
+	}
+	document.getElementById("playerlist").innerHTML = out.join(", ");
+}
+
+function updateSpectatorList(){
+	document.getElementById("spectatorlist").innerHTML = spectators.join(", ");
 }
 
 function drawBoard(){
