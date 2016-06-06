@@ -53,7 +53,7 @@ wss.on("connection", function(conn) {
 					roomname: request.roomname,
 					state:'waiting for players',
 					players:[],
-					whose_turn:0,
+					whose_turn:-1,
 					PLAYERID_COUNT:0,
 					password:"",
 					admin_token:randomString(12),
@@ -198,15 +198,101 @@ wss.on("connection", function(conn) {
 				if( !("player" in conn) ) return;
 				if( conn.player.isplayer == false ) return;
 				
+				var room = games[conn.player.roomname];
+				conn.player.ready = request.ready;
+				
 				var json_response = JSON.stringify({ type:"READY", ready:request.ready, playerid:conn.player.playerid });
-				var room = games[ conn.player.roomname ];
-				for( playerid in room.players ){
-					room.players[playerid].conn.send(json_response);
+				sendToRoom(json_response, conn.player.roomname)
+				
+				// TODO If all players are ready, start a countdown
+				console.log(roomPlayerCount(room.roomname))
+				if( room.state == "waiting for players" && roomPlayerCount(conn.player.roomname) >= 2 ){
+					console.log("Checking players' readiness...");
+					var allready = true;
+					for( playerid in room.players ){
+						if( room.players[playerid].ready == false ){
+							allready = false;
+							break;
+						}
+					}
+					
+					if( allready ){
+						console.log("all players are ready");
+						room.state = "about to start";
+						var packet = {type:"GAMESTATE", state:room.state};
+						sendToRoom(JSON.stringify(packet), room.roomname);
+						
+						room.start_timer = setTimeout(function(){checkGameStart(room.roomname);}, 5000);
+					}
 				}
+				
 				break;
 		}
 	});
 });
+
+function checkGameStart(roomname){
+	// check if all players are still ready
+	var room = games[roomname];
+	var playersReady = true;
+	for( playerid in room.players ){
+		if( room.players[playerid].ready == false ){
+			playersReady = false;
+			break;
+		}
+	}
+	
+	if( playersReady && roomPlayerCount(room.roomname) >= 2 ){
+		// start the game
+		room.state = "started";
+		var packet = {type:"GAMESTATE", state:room.state};
+		sendToRoom(JSON.stringify(packet), roomname);
+		
+		// send the first TURN packet
+		room.whose_turn = getNextTurnPlayerID(room.whose_turn, room.roomname);
+		var turnPacket = {type:"TURN", playerid:room.whose_turn};
+		sendToRoom(JSON.stringify(turnPacket), room.roomname);
+		
+	}else{
+		// "waiting for players" again
+		room.state = "waiting for players";
+		var packet = {type:"GAMESTATE", state:room.state};
+		sendToRoom(JSON.stringify(packet), roomname);
+	}
+}
+
+// Returns the ID of the next PLAYER in line, 
+function getNextTurnPlayerID(currentTurnID, roomname){
+	var room = games[roomname];
+	var actual_players = [];
+	for( playerid in room.players ){
+		actual_players.push(playerid);
+	}
+	
+	if( currentTurnID == -1 ) // first turn of game
+		return actual_players[0];
+	return actual_players[(actual_players.indexOf(currentTurnID)+1) % actual_players.length];
+}
+
+function roomPlayerCount(roomname){
+	var room = games[roomname];
+	var count = 0;
+	for( playerid in room.players ){
+		if( room.players[playerid].isplayer ) count += 1;
+	}
+	return count;
+}
+
+function roomSpectatorCount(roomname){
+	return games[roomname].players.length - roomPlayerCount(roomname);
+}
+
+function sendToRoom(json_string, roomname){
+	var room = games[roomname];
+	for( playerid in room.players ){
+		room.players[playerid].conn.send(json_string);
+	}
+}
 
 function generateBoardPacket(roomname) {
 	var game = games[roomname];
