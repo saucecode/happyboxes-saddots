@@ -1,11 +1,12 @@
 function init(){
 	var element = document.getElementById('canvas');
+	canvas = element;
 	context = element.getContext('2d');
 	connect();
 	// start the canvas thing only if connection successful
 	connection.onopen = function(evt){
 		logToPage("Connected to server", true);
-		update();
+		GAME_INTERVAL = setInterval(update, 100);
 	}
 	connection.onmessage = function(evt) {
 		try{
@@ -28,8 +29,10 @@ READYSTATE = false;
 PLAYERID = null;
 ADMINTOKEN = null;
 USERNAME = null;
+mouseX = 0;
+mouseY = 0;
 
-board = {};
+board = {offset:4, gap:24, selected:{idx:0,idy:0,d:false}};
 players = {}; // players[playerid] = {playerid:0, username:"tarty baked goods", ready:true}
 spectators = [];
 
@@ -107,8 +110,63 @@ function processPacket(packet){
 }
 
 function update(){
-	context.strokeRect(64,64,32,32);
+	context.clearRect(0,0, canvas.width, canvas.height);
+	context.strokeRect(0,0,32,2);
+	context.font = "12px Arial";
+	context.fillStyle = "black";
+	
+	context.fillText(mouseX, canvas.width - 40, 16);
+	context.fillText(mouseY, canvas.width - 40, 26);
+	
+	if( "width" in board &&
+		(  mouseX > board.offset
+		&& mouseY > board.offset
+		&& mouseX < (board.width-0.5)*board.gap
+		&& mouseY < (board.height-0.5)*board.gap) ){
+		var idx = Math.floor((mouseX - board.offset)/board.gap);
+		var idy = Math.floor((mouseY - board.offset)/board.gap);
+
+		var nodes = [
+			{ x:board.offset + idx*board.gap + board.gap/2, y:board.offset + idy*board.gap },
+			{ x:board.offset + idx*board.gap, y:board.offset + idy*board.gap + board.gap/2 },
+			{ x:board.offset + (idx+1)*board.gap, y:board.offset + idy*board.gap + board.gap/2 },
+			{ x:board.offset + idx*board.gap + board.gap/2, y:board.offset + (idy+1)*board.gap }
+		];
+	
+		var smallestID=-1, smallestDistance=100;
+		for( var index=0; index<4; index+=1 ){
+			// context.fillRect(nodes[index].x,nodes[index].y,1,1); // DEBUG
+			nodes[index].d = Math.hypot(mouseX-nodes[index].x, mouseY-nodes[index].y);
+			if( nodes[index].d < smallestDistance ){
+				smallestID = index;
+				smallestDistance = nodes[index].d;
+			}
+		}
+		var isVertical = smallestID == 1 || smallestID == 2;
+		
+		try{
+			context.fillRect(nodes[smallestID].x,nodes[smallestID].y,1,1); // DEBUG
+			if( isVertical ){
+				context.fillRect(nodes[smallestID].x, nodes[smallestID].y - board.gap/2, 1, board.gap);
+			}else{
+				context.fillRect(nodes[smallestID].x - board.gap/2, nodes[smallestID].y, board.gap, 1);
+			}
+			board.selected.idx = idx;
+			board.selected.idy = idy;
+			board.selected.d = isVertical;
+		}catch(err){}
+		context.fillText(idx, canvas.width - 40, 36);
+		context.fillText(idy, canvas.width - 40, 46);
+		
+		context.fillText(JSON.stringify(board.selected), canvas.width-140, 66);
+	}
+	
 	drawBoard();
+}
+
+function onMouseMove(e) {
+	mouseX = Math.floor(e.clientX - canvas.getBoundingClientRect().left);
+	mouseY = Math.floor(e.clientY - canvas.getBoundingClientRect().top);
 }
 
 function updatePlayerList(){
@@ -124,12 +182,10 @@ function updateSpectatorList(){
 }
 
 function drawBoard(){
-	var offset = 4;
-	var gap = 24;
 	context.fillStyle = "black";
-	for( var x=0; x<board.width*gap; x+=gap ){
-		for( var y=0; y<board.height*gap; y+=gap ){
-			context.fillRect(offset + x-2, offset + y-2, 4, 4);
+	for( var x=0; x<board.width*board.gap; x+=board.gap ){
+		for( var y=0; y<board.height*board.gap; y+=board.gap ){
+			context.fillRect(board.offset + x-2, board.offset + y-2, 4, 4);
 		}
 	}
 }
@@ -182,4 +238,5 @@ function logToPage(msg, logConsole){
 }
 
 window.addEventListener('load', init, false);
+document.addEventListener("mousemove", onMouseMove, false);
 
