@@ -9,7 +9,17 @@
 	<body>
 		<h1 id="roomname"></h1>
 		Room status: <span id="roomstatus"></span><br/>
-		<canvas id="canvas" width=800 height=300 style="border:1px solid black;"></canvas>
+		<table>
+			<tr>
+				<td><canvas id="canvas" width=480 height=300 style="border:1px solid black;"></canvas></td>
+				<td>
+					Players:
+					<span id="playerlist"></span><br/>
+					Spectators:
+					<span id="spectatorlist"></span>
+				</td>
+			</tr>
+		</table>
 		<div>
 			<p>Fun buttons!</p>
 			Create a room:<br/>
