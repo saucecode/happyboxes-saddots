@@ -11,7 +11,7 @@ var WebSocket = require('ws').WebSocket;
 wss = new WebSocketServer({port:25565});
 PLAYERID_COUNT = 0;
 
-games = {};
+rooms = {};
 
 wss.on("connection", function(conn) {
 	console.log("Conneciton opened.");
@@ -37,7 +37,7 @@ wss.on("connection", function(conn) {
 					return;
 				}
 				
-				if( (request.roomname in games) ){
+				if( (request.roomname in rooms) ){
 					var response = {type:"CREATE", ok:false, message:"room already exists"};
 					conn.send(JSON.stringify(response));
 					return;
@@ -49,7 +49,7 @@ wss.on("connection", function(conn) {
 					return;
 				}
 				
-				var newgame = {
+				var newroom = {
 					roomname: request.roomname,
 					state:'waiting for players',
 					players:[],
@@ -64,9 +64,9 @@ wss.on("connection", function(conn) {
 					captures:[]
 				};
 				
-				games[request.roomname] = newgame;
+				rooms[request.roomname] = newroom;
 				
-				var response = {type:"CREATE", ok:true, admintoken:newgame.admin_token};
+				var response = {type:"CREATE", ok:true, admintoken:newroom.admin_token};
 				conn.send(JSON.stringify(response));
 				
 				break;
@@ -77,22 +77,22 @@ wss.on("connection", function(conn) {
 					return;
 				}
 				
-				if( !(request.roomname in games) ){
+				if( !(request.roomname in rooms) ){
 					var response = {type:"JOIN", ok:false, message:"room does not exist or roomname incorrect"};
 					conn.send(JSON.stringify(response));
 					return;
 				}
 				
 				if( "player" in conn ){
-					var response = {type:"JOIN", ok:false, message:"you've already joined a game. reload the page."};
+					var response = {type:"JOIN", ok:false, message:"you've already joined a room. reload the page."};
 					conn.send(JSON.stringify(response));
 					return;
 				}
 				
-				var game = games[request.roomname];
+				var room = rooms[request.roomname];
 				
-				if( game.password != "" ){
-					if( request.password != game.password ){
+				if( room.password != "" ){
+					if( request.password != room.password ){
 						var response = {type:"JOIN", ok:false, message:"incorrect password"};
 						conn.send(JSON.stringify(response));
 						return;
@@ -117,12 +117,12 @@ wss.on("connection", function(conn) {
 					username:newplayer.username,
 					isplayer:newplayer.isplayer
 				};
-				for( var index in game.players ){
-					var player = game.players[index];
+				for( var index in room.players ){
+					var player = room.players[index];
 					player.conn.send(JSON.stringify(add_packet));
 				}
 				
-				game.players.push(newplayer);
+				room.players.push(newplayer);
 				
 				var response = {
 					type:"JOIN",
@@ -132,7 +132,7 @@ wss.on("connection", function(conn) {
 				
 				conn.send(JSON.stringify(response));
 				
-				conn.send(JSON.stringify( generateBoardPacket(game.roomname) ));
+				conn.send(JSON.stringify( generateBoardPacket(room.roomname) ));
 				
 				break;
 			case "SPECTATE":
@@ -142,19 +142,19 @@ wss.on("connection", function(conn) {
 					return;
 				}
 				
-				if( !(request.roomname in games) ){
+				if( !(request.roomname in room) ){
 					var response = {type:"SPECTATE", ok:false, message:"room does not exist or roomname incorrect"};
 					conn.send(JSON.stringify(response));
 					return;
 				}
 				
 				if( "player" in conn ){
-					var response = {type:"SPECTATE", ok:false, message:"you've already joined a game. reload the page."};
+					var response = {type:"SPECTATE", ok:false, message:"you've already joined a room. reload the page."};
 					conn.send(JSON.stringify(response));
 					return;
 				}
 				
-				var game = games[request.roomname];
+				var room = rooms[request.roomname];
 				
 				var newspectator = {
 					username:request.username,
@@ -173,12 +173,12 @@ wss.on("connection", function(conn) {
 					username:newspectator.username,
 					isplayer:newspectator.isplayer
 				};
-				for( var index in game.players ){
-					var player = game.players[index];
+				for( var index in room.players ){
+					var player = room.players[index];
 					player.conn.send(JSON.stringify(add_packet));
 				}
 				
-				game.players.push(newspectator);
+				room.players.push(newspectator);
 				
 				var response = {
 					type:"SPECTATE",
@@ -198,7 +198,7 @@ wss.on("connection", function(conn) {
 				if( !("player" in conn) ) return;
 				if( conn.player.isplayer == false ) return;
 				
-				var room = games[conn.player.roomname];
+				var room = rooms[conn.player.roomname];
 				conn.player.ready = request.ready;
 				
 				var json_response = JSON.stringify({ type:"READY", ready:request.ready, playerid:conn.player.playerid });
@@ -233,7 +233,7 @@ wss.on("connection", function(conn) {
 
 function checkGameStart(roomname){
 	// check if all players are still ready
-	var room = games[roomname];
+	var room = rooms[roomname];
 	var playersReady = true;
 	for( playerid in room.players ){
 		if( room.players[playerid].ready == false ){
@@ -263,7 +263,7 @@ function checkGameStart(roomname){
 
 // Returns the ID of the next PLAYER in line, 
 function getNextTurnPlayerID(currentTurnID, roomname){
-	var room = games[roomname];
+	var room = rooms[roomname];
 	var actual_players = [];
 	for( playerid in room.players ){
 		actual_players.push(playerid);
@@ -275,7 +275,7 @@ function getNextTurnPlayerID(currentTurnID, roomname){
 }
 
 function roomPlayerCount(roomname){
-	var room = games[roomname];
+	var room = rooms[roomname];
 	var count = 0;
 	for( playerid in room.players ){
 		if( room.players[playerid].isplayer ) count += 1;
@@ -284,21 +284,21 @@ function roomPlayerCount(roomname){
 }
 
 function roomSpectatorCount(roomname){
-	return games[roomname].players.length - roomPlayerCount(roomname);
+	return rooms[roomname].players.length - roomPlayerCount(roomname);
 }
 
 function sendToRoom(json_string, roomname){
-	var room = games[roomname];
+	var room = rooms[roomname];
 	for( playerid in room.players ){
 		room.players[playerid].conn.send(json_string);
 	}
 }
 
 function generateBoardPacket(roomname) {
-	var game = games[roomname];
+	var room = rooms[roomname];
 	var _players = {}, _spectators = {};
-	for( var index in game.players ){
-		var player = game.players[index];
+	for( var index in rooms.players ){
+		var player = room.players[index];
 		if( player.isplayer )
 			_players[player.playerid] = player.username;
 		else
@@ -308,13 +308,13 @@ function generateBoardPacket(roomname) {
 	return {
 		type:"BOARD",
 		roomname:roomname,
-		gamestate:game.state,
-		width:game.width,
-		height:game.height,
+		gamestate:room.state,
+		width:room.width,
+		height:room.height,
 		players:_players,
 		spectators:_spectators,
-		lines:game.lines,
-		captures:game.captures
+		lines:room.lines,
+		captures:room.captures
 	};
 }
 
