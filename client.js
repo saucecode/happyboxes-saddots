@@ -2,6 +2,10 @@ function init(){
 	var element = document.getElementById('canvas');
 	canvas = element;
 	context = element.getContext('2d');
+	
+	document.addEventListener("mousemove", onMouseMove, false);
+	canvas.addEventListener("mousedown", onMouseDown, false);
+	
 	connect();
 	// start the canvas thing only if connection successful
 	connection.onopen = function(evt){
@@ -118,7 +122,7 @@ function update(){
 	context.fillText(mouseX, canvas.width - 40, 16);
 	context.fillText(mouseY, canvas.width - 40, 26);
 	
-	if( "width" in board &&
+	if( "width" in board && ISPLAYER &&
 		(  mouseX > board.offset
 		&& mouseY > board.offset
 		&& mouseX < (board.width-0.5)*board.gap
@@ -162,6 +166,13 @@ function update(){
 	}
 	
 	drawBoard();
+}
+
+function onMouseDown(e){
+	if( e.button == 0 ){
+		var packet = {type:"MOVE", x:board.selected.idx, y:board.selected.idy, d:board.selected.d?1:0};
+		connection.send(JSON.stringify(packet));
+	}
 }
 
 function onMouseMove(e) {
@@ -238,5 +249,4 @@ function logToPage(msg, logConsole){
 }
 
 window.addEventListener('load', init, false);
-document.addEventListener("mousemove", onMouseMove, false);
 
