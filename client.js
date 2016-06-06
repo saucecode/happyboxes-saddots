@@ -131,10 +131,10 @@ function update(){
 		var idy = Math.floor((mouseY - board.offset)/board.gap);
 
 		var nodes = [
-			{ x:board.offset + idx*board.gap + board.gap/2, y:board.offset + idy*board.gap },
-			{ x:board.offset + idx*board.gap, y:board.offset + idy*board.gap + board.gap/2 },
-			{ x:board.offset + (idx+1)*board.gap, y:board.offset + idy*board.gap + board.gap/2 },
-			{ x:board.offset + idx*board.gap + board.gap/2, y:board.offset + (idy+1)*board.gap }
+			{ idx:idx, idy:idy, x:board.offset + idx*board.gap + board.gap/2, y:board.offset + idy*board.gap },
+			{ idx:idx, idy:idy, x:board.offset + idx*board.gap, y:board.offset + idy*board.gap + board.gap/2 },
+			{ idx:idx+1, idy:idy, x:board.offset + (idx+1)*board.gap, y:board.offset + idy*board.gap + board.gap/2 },
+			{ idx:idx, idy:idy+1, x:board.offset + idx*board.gap + board.gap/2, y:board.offset + (idy+1)*board.gap }
 		];
 	
 		var smallestID=-1, smallestDistance=100;
@@ -149,15 +149,11 @@ function update(){
 		var isVertical = smallestID == 1 || smallestID == 2;
 		
 		try{
-			context.fillRect(nodes[smallestID].x,nodes[smallestID].y,1,1); // DEBUG
-			if( isVertical ){
-				context.fillRect(nodes[smallestID].x, nodes[smallestID].y - board.gap/2, 1, board.gap);
-			}else{
-				context.fillRect(nodes[smallestID].x - board.gap/2, nodes[smallestID].y, board.gap, 1);
-			}
-			board.selected.idx = idx;
-			board.selected.idy = idy;
+			// context.fillRect(nodes[smallestID].x,nodes[smallestID].y,1,1); // DEBUG
+			board.selected.idx = nodes[smallestID].idx;
+			board.selected.idy = nodes[smallestID].idy;
 			board.selected.d = isVertical;
+			drawGridLine(board.selected.idx, board.selected.idy, isVertical?1:0);
 		}catch(err){}
 		context.fillText(idx, canvas.width - 40, 36);
 		context.fillText(idy, canvas.width - 40, 46);
@@ -178,6 +174,16 @@ function onMouseDown(e){
 function onMouseMove(e) {
 	mouseX = Math.floor(e.clientX - canvas.getBoundingClientRect().left);
 	mouseY = Math.floor(e.clientY - canvas.getBoundingClientRect().top);
+}
+
+function drawGridLine(idx, idy, direction){
+	var xstart = board.offset + idx*board.gap;
+	var ystart = board.offset + idy*board.gap;
+	if( direction == 1 ){ // vertical
+		context.fillRect(xstart-1, ystart, 2, board.gap);
+	}else{ // horizontal
+		context.fillRect(xstart, ystart-1, board.gap, 2);
+	}
 }
 
 function updatePlayerList(){
