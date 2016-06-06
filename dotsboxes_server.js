@@ -15,7 +15,18 @@ rooms = {};
 
 wss.on("connection", function(conn) {
 	console.log("Conneciton opened.");
-
+	
+	conn.on("close", function(){
+		console.log("Connection closed.");
+		if( !("player" in conn) ) return;
+		
+		var dropPacket = {type:"REMOVE", playerid:conn.player.playerid, message:"connection was dropped"};
+		
+		delete rooms[conn.player.roomname].players[conn.player.playerid];
+		sendToRoom(JSON.stringify(dropPacket), conn.player.roomname);
+		console.log("Deleted player.");
+	});
+	
 	conn.on("message", function(message){
 		var request = null;
 		try{
@@ -204,8 +215,6 @@ wss.on("connection", function(conn) {
 				var json_response = JSON.stringify({ type:"READY", ready:request.ready, playerid:conn.player.playerid });
 				sendToRoom(json_response, conn.player.roomname)
 				
-				// TODO If all players are ready, start a countdown
-				console.log(roomPlayerCount(room.roomname))
 				if( room.state == "waiting for players" && roomPlayerCount(conn.player.roomname) >= 2 ){
 					console.log("Checking players' readiness...");
 					var allready = true;
