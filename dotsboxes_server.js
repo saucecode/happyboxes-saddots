@@ -331,6 +331,7 @@ function checkGameStart(roomname){
 		room.state = "waiting for players";
 		var packet = {type:"GAMESTATE", state:room.state};
 		sendToRoom(JSON.stringify(packet), roomname);
+		
 	}
 }
 
@@ -338,21 +339,21 @@ function checkGameStart(roomname){
 function getNextTurnPlayerID(currentTurnID, roomname){
 	var room = rooms[roomname];
 	var actual_players = [];
-	for( playerid in room.players ){
+	for( var playerid in room.players ){
 		if( room.players[playerid].isplayer ) actual_players.push(playerid);
 	}
 	
-	if( currentTurnID == -1 ) // first turn of game
-		return actual_players[0];
+	if( currentTurnID == -1 ) return actual_players[0]; // -1 indicates first turn of the game
+	
 	return actual_players[(actual_players.indexOf(currentTurnID)+1) % actual_players.length];
 }
 
 function lineExists(proposedLine, roomname){
 	var lines = rooms[roomname].lines;
-	for( index in lines ){
+	for( var index in lines ){
 		if( lines[index][0] == proposedLine[0]
 		&& lines[index][1] == proposedLine[1]
-		&& lines[index][2] == proposedLine[2]) return true;
+		&& lines[index][2] == proposedLine[2] ) return true;
 	}
 	return false;
 }
@@ -360,7 +361,7 @@ function lineExists(proposedLine, roomname){
 // Checks if there is a capture declared at box at x,y
 function captureExists(x, y, roomname){
 	var captures = rooms[roomname].captures;
-	for( index in captures ){
+	for( var index in captures ){
 		if( captures[index][0] == x && captures[index][1] == y ) return true;
 	}
 	return false;
@@ -381,7 +382,7 @@ function checkForCapture(x, y, roomname){
 function roomPlayerCount(roomname){
 	var room = rooms[roomname];
 	var count = 0;
-	for( playerid in room.players ){
+	for( var playerid in room.players ){
 		if( room.players[playerid].isplayer ) count += 1;
 	}
 	return count;
@@ -393,7 +394,7 @@ function roomSpectatorCount(roomname){
 
 function sendToRoom(json_string, roomname){
 	var room = rooms[roomname];
-	for( playerid in room.players ){
+	for( var playerid in room.players ){
 		room.players[playerid].conn.send(json_string);
 	}
 }
