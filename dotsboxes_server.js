@@ -356,7 +356,7 @@ function getNextTurnPlayerID(currentTurnID, roomname){
 	var room = rooms[roomname];
 	var actual_players = [];
 	for( playerid in room.players ){
-		actual_players.push(playerid);
+		if( room.players[playerid].isplayer ) actual_players.push(playerid);
 	}
 	
 	if( currentTurnID == -1 ) // first turn of game
