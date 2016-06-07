@@ -114,6 +114,10 @@ function processPacket(packet){
 			var move = [packet.x,packet.y,packet.d];
 			board.lines.push(move);
 			break;
+		case "READY":
+			players[packet.playerid].ready = packet.ready;
+			updatePlayerList();
+			break;
 	}
 }
 
