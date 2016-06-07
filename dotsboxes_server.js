@@ -236,6 +236,88 @@ wss.on("connection", function(conn) {
 				}
 				
 				break;
+			case "MOVE":
+				if( !( "player" in conn ) ) return;
+				if( conn.player.isplayer == false ) return;
+				
+				var room = rooms[conn.player.roomname];
+				
+				// Check move is in player's turn
+				if( conn.player.playerid != room.whose_turn ){
+					return;
+				}
+				
+				// Check move in valid position
+				if( request.x < 0 || request.y < 0 ) return;
+				if( request.d == 0 && request.x >= room.width - 1 ) return;
+				if( request.d == 1 && request.y >= room.height - 1 ) return;
+				
+				var proposedLine = [request.x, request.y, request.d];
+				if( lineExists(proposedLine, room.roomname) ) return;
+				
+				// Make move and broadcast
+				room.lines.push(proposedLine);
+				request.playerid = conn.player.playerid;
+				sendToRoom(JSON.stringify(request), room.roomname);
+				
+				var captureTurn = false;
+				var captured = []; // to be pushed into room.captures if this is a capture turn.
+				// an array because you can capture more than one box in one move
+				
+				console.log("looking for captures...");
+				// Check if it is a capture
+				// TODO Simplify this into a one-liner.
+				if( proposedLine.d == 0 ){ // horizontal
+					if( !captureExists(proposedLine.x, proposedLine.y, room.roomname) )
+						if( checkForCapture(proposedLine.x, proposedLine.y, room.roomname) ){
+							captureTurn = true;
+							captured.push([proposedLine.x, proposedLine.y]);
+						}
+						
+					if( !captureExists(proposedLine.x, proposedLine.y-1, room.roomname) )
+						if( checkForCapture(proposedLine.x, proposedLine.y-1, room.roomname) ){
+							captureTurn = true;
+							captured.push([proposedLine.x, proposedLine.y-1]);
+						}
+						
+				}else if( proposedLine.d == 1 ){
+					if( !captureExists(proposedLine.x, proposedLine.y, room.roomname) )
+						if( checkForCapture(proposedLine.x, proposedLine.y, room.roomname) ){
+							captureTurn = true;
+							captured.push([proposedLine.x, proposedLine.y]);
+						}
+						
+					if( !captureExists(proposedLine.x-1, proposedLine.y, room.roomname) )
+						if( checkForCapture(proposedLine.x-1, proposedLine.y, room.roomname) ){
+							captureTurn = true;
+							captured.push([proposedLine.x-1, proposedLine.y]);
+						}
+				}
+				
+				// Send the next turn packet (do not send TURN packets on a capture)
+				if( captureTurn ){
+					console.log("a capture happened! " + JSON.stringify(captured));
+					for( index in captured ){
+						captured[index].push(conn.player.playerid);
+						room.captures.push(captured[index]);
+					
+						var capturePacket = {
+							type:"CAPTURE",
+							x:captured[index][0],
+							y:captured[index][1],
+							playerid:captured[index][2]
+						};
+						sendToRoom(JSON.stringify(capturePacket), room.roomname);
+					}
+					
+				}else{
+					room.whose_turn = getNextTurnPlayerID(room.whose_turn, room.roomname);
+					var turnPacket = {type:"TURN", playerid:room.whose_turn};
+					sendToRoom(JSON.stringify(turnPacket), room.roomname);
+					
+				}
+				
+				break;
 		}
 	});
 });
@@ -281,6 +363,37 @@ function getNextTurnPlayerID(currentTurnID, roomname){
 	if( currentTurnID == -1 ) // first turn of game
 		return actual_players[0];
 	return actual_players[(actual_players.indexOf(currentTurnID)+1) % actual_players.length];
+}
+
+function lineExists(proposedLine, roomname){
+	var lines = rooms[roomname].lines;
+	for( index in lines ){
+		if( lines[index][0] == proposedLine[0]
+		&& lines[index][1] == proposedLine[1]
+		&& lines[index][2] == proposedLine[2]) return true;
+	}
+	return false;
+}
+
+// Checks if there is a capture declared at box at x,y
+function captureExists(x, y, roomname){
+	var captures = rooms[roomname].captures;
+	for( index in captures ){
+		if( captures[index][0] == x && captures[index][1] == y ) return true;
+	}
+	return false;
+}
+
+// Check if the box at x,y,x+1,y+1 has four lines connecting
+function checkForCapture(x, y, roomname){
+	var lines = [
+		{x:x, y:y, d:0},
+		{x:x, y:y, d:1},
+		{x:x+1, y:y, d:1},
+		{x:x, y:y+1, d:0}
+	];
+	return ( lineExists(lines[0], roomname) && lineExists(lines[1], roomname)
+		&& lineExists(lines[2], roomname) && lineExists(lines[3], roomname) );
 }
 
 function roomPlayerCount(roomname){
