@@ -3,7 +3,6 @@ Node.js server for a 2+ multiplayer dots &amp; boxes game.
 
 ## TODO
 
- - Add clientside game logic.
  - Handle players leaving on their turn.
  - Implement chat.
  - Implement admin's kicking function.
@@ -15,6 +14,8 @@ Node.js server for a 2+ multiplayer dots &amp; boxes game.
  - Implement readying up.
  - Start drawing the board.
  - Handle players leaving.
+ - Add clientside game logic.
+ - Add gameplay (placing lines, capturing)
 
 ## Network Protocol
 
