@@ -36,7 +36,7 @@ USERNAME = null;
 mouseX = 0;
 mouseY = 0;
 
-board = {offset:4, gap:24, selected:{idx:0,idy:0,d:false}};
+board = {offset:4, gap:24, selected:{idx:0,idy:0,d:false}, lines:[]};
 players = {}; // players[playerid] = {playerid:0, username:"tarty baked goods", ready:true}
 spectators = [];
 
@@ -109,6 +109,10 @@ function processPacket(packet){
 				delete spectators[packet.playerid];
 				updateSpectatorList();
 			}
+			break;
+		case "MOVE":
+			var move = [packet.x,packet.y,packet.d];
+			board.lines.push(move);
 			break;
 	}
 }
@@ -203,6 +207,16 @@ function drawBoard(){
 	for( var x=0; x<board.width*board.gap; x+=board.gap ){
 		for( var y=0; y<board.height*board.gap; y+=board.gap ){
 			context.fillRect(board.offset + x-2, board.offset + y-2, 4, 4);
+		}
+	}
+	
+	for( index in board.lines ){
+		var x = board.offset + board.lines[index][0]*board.gap;
+		var y = board.offset + board.lines[index][1]*board.gap;
+		if( board.lines[index][2] == 0 ){
+			context.fillRect(x,y-1, board.gap, 2);
+		}else{
+			context.fillRect(x-1,y, 2, board.gap);
 		}
 	}
 }
