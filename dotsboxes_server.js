@@ -264,33 +264,32 @@ wss.on("connection", function(conn) {
 				var captured = []; // to be pushed into room.captures if this is a capture turn.
 				// an array because you can capture more than one box in one move
 				
-				console.log("looking for captures...");
 				// Check if it is a capture
 				// TODO Simplify this into a one-liner.
-				if( proposedLine.d == 0 ){ // horizontal
-					if( !captureExists(proposedLine.x, proposedLine.y, room.roomname) )
-						if( checkForCapture(proposedLine.x, proposedLine.y, room.roomname) ){
+				if( proposedLine[2] == 0 ){ // horizontal
+					if( !captureExists(proposedLine[0], proposedLine[1], room.roomname) )
+						if( checkForCapture(proposedLine[0], proposedLine[1], room.roomname) ){
 							captureTurn = true;
-							captured.push([proposedLine.x, proposedLine.y]);
+							captured.push([proposedLine[0], proposedLine[1]]);
 						}
 						
-					if( !captureExists(proposedLine.x, proposedLine.y-1, room.roomname) )
-						if( checkForCapture(proposedLine.x, proposedLine.y-1, room.roomname) ){
+					if( !captureExists(proposedLine[0], proposedLine[1]-1, room.roomname) )
+						if( checkForCapture(proposedLine[0], proposedLine[1]-1, room.roomname) ){
 							captureTurn = true;
-							captured.push([proposedLine.x, proposedLine.y-1]);
+							captured.push([proposedLine[0], proposedLine[1]-1]);
 						}
 						
-				}else if( proposedLine.d == 1 ){
-					if( !captureExists(proposedLine.x, proposedLine.y, room.roomname) )
-						if( checkForCapture(proposedLine.x, proposedLine.y, room.roomname) ){
+				}else if( proposedLine[2] == 1 ){
+					if( !captureExists(proposedLine[0], proposedLine[1], room.roomname) )
+						if( checkForCapture(proposedLine[0], proposedLine[1], room.roomname) ){
 							captureTurn = true;
-							captured.push([proposedLine.x, proposedLine.y]);
+							captured.push([proposedLine[0], proposedLine[1]]);
 						}
 						
-					if( !captureExists(proposedLine.x-1, proposedLine.y, room.roomname) )
-						if( checkForCapture(proposedLine.x-1, proposedLine.y, room.roomname) ){
+					if( !captureExists(proposedLine[0]-1, proposedLine[1], room.roomname) )
+						if( checkForCapture(proposedLine[0]-1, proposedLine[1], room.roomname) ){
 							captureTurn = true;
-							captured.push([proposedLine.x-1, proposedLine.y]);
+							captured.push([proposedLine[0]-1, proposedLine[1]]);
 						}
 				}
 				
@@ -387,10 +386,10 @@ function captureExists(x, y, roomname){
 // Check if the box at x,y,x+1,y+1 has four lines connecting
 function checkForCapture(x, y, roomname){
 	var lines = [
-		{x:x, y:y, d:0},
-		{x:x, y:y, d:1},
-		{x:x+1, y:y, d:1},
-		{x:x, y:y+1, d:0}
+		[x, y, 0],
+		[x, y, 1],
+		[x+1, y, 1],
+		[x, y+1, 0]
 	];
 	return ( lineExists(lines[0], roomname) && lineExists(lines[1], roomname)
 		&& lineExists(lines[2], roomname) && lineExists(lines[3], roomname) );
