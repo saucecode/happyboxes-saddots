@@ -62,7 +62,7 @@ wss.on("connection", function(conn) {
 				
 				var newroom = {
 					roomname: request.roomname,
-					state:'waiting for players',
+					state:"waiting for players",
 					players:[],
 					whose_turn:-1,
 					PLAYERID_COUNT:0,
@@ -82,7 +82,7 @@ wss.on("connection", function(conn) {
 				
 				break;
 			case "JOIN":
-				if( request.username.length < 4 || request.username.length > 16){
+				if( request.username.length < 4 || request.username.length > 16 ){
 					var response = {type:"JOIN", ok:false, message:"username too short or long (4-16 characters)"};
 					conn.send(JSON.stringify(response));
 					return;
@@ -199,12 +199,13 @@ wss.on("connection", function(conn) {
 				
 				conn.send(JSON.stringify(response));
 				conn.send(JSON.stringify( generateBoardPacket(request.roomname) ));
+				
 				break;
 			case "BOARD":
 				if( !( "player" in conn ) ) return;
 				conn.send(JSON.stringify( generateBoardPacket(conn.player.roomname) ));
+				
 				break;
-			
 			case "READY":
 				if( !("player" in conn) ) return;
 				if( conn.player.isplayer == false ) return;
@@ -216,7 +217,6 @@ wss.on("connection", function(conn) {
 				sendToRoom(json_response, conn.player.roomname)
 				
 				if( room.state == "waiting for players" && roomPlayerCount(conn.player.roomname) >= 2 ){
-					console.log("Checking players' readiness...");
 					var allready = true;
 					for( playerid in room.players ){
 						if( room.players[playerid].ready == false ){
@@ -243,9 +243,7 @@ wss.on("connection", function(conn) {
 				var room = rooms[conn.player.roomname];
 				
 				// Check move is in player's turn
-				if( conn.player.playerid != room.whose_turn ){
-					return;
-				}
+				if( conn.player.playerid != room.whose_turn ) return;
 				
 				// Check move in valid position
 				if( request.x < 0 || request.y < 0 ) return;
@@ -261,37 +259,22 @@ wss.on("connection", function(conn) {
 				sendToRoom(JSON.stringify(request), room.roomname);
 				
 				var captureTurn = false;
-				var captured = []; // to be pushed into room.captures if this is a capture turn.
+				var captured = []; // to be pushed into room.captures if captureTurn == true.
 				// an array because you can capture more than one box in one move
 				
-				// Check if it is a capture
-				// TODO Simplify this into a one-liner.
-				if( proposedLine[2] == 0 ){ // horizontal
-					if( !captureExists(proposedLine[0], proposedLine[1], room.roomname) )
-						if( checkForCapture(proposedLine[0], proposedLine[1], room.roomname) ){
-							captureTurn = true;
-							captured.push([proposedLine[0], proposedLine[1]]);
-						}
-						
-					if( !captureExists(proposedLine[0], proposedLine[1]-1, room.roomname) )
-						if( checkForCapture(proposedLine[0], proposedLine[1]-1, room.roomname) ){
-							captureTurn = true;
-							captured.push([proposedLine[0], proposedLine[1]-1]);
-						}
-						
-				}else if( proposedLine[2] == 1 ){
-					if( !captureExists(proposedLine[0], proposedLine[1], room.roomname) )
-						if( checkForCapture(proposedLine[0], proposedLine[1], room.roomname) ){
-							captureTurn = true;
-							captured.push([proposedLine[0], proposedLine[1]]);
-						}
-						
-					if( !captureExists(proposedLine[0]-1, proposedLine[1], room.roomname) )
-						if( checkForCapture(proposedLine[0]-1, proposedLine[1], room.roomname) ){
-							captureTurn = true;
-							captured.push([proposedLine[0]-1, proposedLine[1]]);
-						}
-				}
+				// Check if a capture has happened in x,y & x,y-1 (horizontal turn) or x,y & x-1,y (vertical turn)
+				if( !captureExists(proposedLine[0], proposedLine[1], room.roomname) )
+					if( checkForCapture(proposedLine[0], proposedLine[1], room.roomname) ){
+						captureTurn = true;
+						captured.push([proposedLine[0], proposedLine[1]]);
+					}
+				// Scary proposition arithmetic magic checks one of two squares based on the turn's direction.
+				// See expanded version at commit 831fc91, line 268.
+				if( !captureExists(proposedLine[0]-proposedLine[2], proposedLine[1]+proposedLine[2]-1, room.roomname) )
+					if( checkForCapture(proposedLine[0]-proposedLine[2], proposedLine[1]+proposedLine[2]-1, room.roomname) ){
+						captureTurn = true;
+						captured.push([proposedLine[0]-proposedLine[2], proposedLine[1]+proposedLine[2]-1]);
+					}
 				
 				// Send the next turn packet (do not send TURN packets on a capture)
 				if( captureTurn ){
