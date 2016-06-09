@@ -18,7 +18,15 @@ wss.on("connection", function(conn) {
 	
 	conn.on("close", function(){
 		console.log("Connection closed.");
-		if( !("player" in conn) ) return;
+		if( !("player" in conn) ) return; // if connection hasn't made a SPECTATE or JOIN request
+		
+		// TODO 
+		/* if( conn.player.playerid == rooms[conn.player.roomname].whose_turn ){
+			gotoNextTurn(conn.player.roomname);
+			if( roomPlayerCount(conn.player.roomname) > 2 ){
+				
+			}
+		} */
 		
 		var dropPacket = {type:"REMOVE", playerid:conn.player.playerid, message:"connection was dropped"};
 		
@@ -299,10 +307,7 @@ wss.on("connection", function(conn) {
 					}
 					
 				}else{
-					room.whose_turn = getNextTurnPlayerID(room.whose_turn, room.roomname);
-					var turnPacket = {type:"TURN", playerid:room.whose_turn};
-					sendToRoom(JSON.stringify(turnPacket), room.roomname);
-					
+					gotoNextTurn( roomname );
 				}
 				
 				break;
@@ -328,9 +333,7 @@ function checkGameStart(roomname){
 		sendToRoom(JSON.stringify(packet), roomname);
 		
 		// send the first TURN packet
-		room.whose_turn = getNextTurnPlayerID(room.whose_turn, room.roomname);
-		var turnPacket = {type:"TURN", playerid:room.whose_turn};
-		sendToRoom(JSON.stringify(turnPacket), room.roomname);
+		gotoNextTurn( roomname );
 		
 	}else{
 		// "waiting for players" again
@@ -339,6 +342,13 @@ function checkGameStart(roomname){
 		sendToRoom(JSON.stringify(packet), roomname);
 		
 	}
+}
+
+function gotoNextTurn(roomname){
+	var room = rooms[roomname];
+	room.whose_turn = getNextTurnPlayerID(room.whose_turn, roomname);
+	var turnPacket = {type:"TURN", playerid:whose_turn};
+	sendToRoom(JSON.stringify(turnPacket), roomname);
 }
 
 // Returns the ID of the next PLAYER in line, 
