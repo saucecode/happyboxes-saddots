@@ -89,6 +89,7 @@ function processPacket(packet){
 			board.width = packet.width;
 			board.height = packet.height;
 			board.lines = packet.lines;
+			board.captures = packet.captures;
 			update();
 			break;
 		case "ADD":
@@ -117,6 +118,10 @@ function processPacket(packet){
 		case "READY":
 			players[packet.playerid].ready = packet.ready;
 			updatePlayerList();
+			break;
+		case "CAPTURE":
+			var capture = [packet.x, packet.y, packet.playerid];
+			board.captures.push(capture);
 			break;
 	}
 }
