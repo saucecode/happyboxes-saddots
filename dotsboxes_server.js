@@ -66,7 +66,7 @@ wss.on("connection", function(conn) {
 					players:[],
 					whose_turn:-1,
 					PLAYERID_COUNT:0,
-					password:"",
+					password:request.password,
 					admin_token:randomString(12),
 					
 					width:request.width,
