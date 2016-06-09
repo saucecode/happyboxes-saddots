@@ -71,7 +71,6 @@ function processPacket(packet){
 			break;
 		
 		case "BOARD":
-			document.getElementById("roomstatus").innerHTML = packet.gamestate;
 			document.getElementById("roomname").innerHTML = packet.roomname + " - " + (ISPLAYER ? "playing" : "spectating");
 			ROOMNAME = packet.roomname;
 			
@@ -86,10 +85,14 @@ function processPacket(packet){
 			updatePlayerList();
 			updateSpectatorList();
 			
+			board.state = packet.gamestate;
+			updateRoomStatus();
+			
 			board.width = packet.width;
 			board.height = packet.height;
 			board.lines = packet.lines;
 			board.captures = packet.captures;
+			
 			update();
 			break;
 		case "ADD":
@@ -235,6 +238,10 @@ function drawBoard(){
 		var y = board.offset + board.captures[index][1]*board.gap;
 		context.fillText("" + board.captures[index][2], x+2, y+10);
 	}
+}
+
+function updateRoomStatus(){
+	document.getElementById("roomstatus").innerHTML = board.state;
 }
 
 function createRoom(){
