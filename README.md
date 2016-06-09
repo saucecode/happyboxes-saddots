@@ -31,7 +31,7 @@ When the game starts, a `TURN` packet is broadcast, with the playerid whose turn
 
 When a player captures a box, a `CAPTURE` packet is broadcast. It continues to be that player's turn - they must go again.
 
-If all boxes have been captured, the scores are calculated, and a new `GAMESTATE` is sent with either "ended" or "tied" as `state`. The winner's playerid is also sent. Nothing can happen until the admin sends a reset command with an `ADMIN` packet.
+If all boxes have been captured, the scores are calculated, and a new `GAMESTATE` is sent with either "ended" or "tied" as `state`. The winner's playerid is also sent, or if it is a tie, the ids of the tiees. Nothing can happen until the admin sends a reset command with an `ADMIN` packet.
 
 The admin can kick any player at any time. If the player count falls below 2, the gamestate declares the last person the victor.
 
@@ -163,7 +163,7 @@ An admin command. Can be used to `reset` or `terminate` the game or kick a `play
 
 ### GAMESTATE
 
-Updates the state of the game. This is only sent by the server. `winnerid` only sent if state is "ended".
+Updates the state of the game. This is only sent by the server. `winnerid` only sent if state is "ended". `winnerids` only sent if state is "tied".
 
     Broadcast:
-	{ type:"GAMESTATE", "state":"waiting for players|about to start|started|ended|tied", winnerid:2 }
+	{ type:"GAMESTATE", "state":"waiting for players|about to start|started|ended|tied", winnerid:2, winnerids:[0,2] }
