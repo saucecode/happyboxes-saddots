@@ -102,6 +102,12 @@ wss.on("connection", function(conn) {
 				
 				var room = rooms[request.roomname];
 				
+				if( room.state == "started" ){
+					var response = {type:"JOIN", ok:false, message:"the game has already started. join as a spectator."};
+					conn.send(JSON.stringify(response));
+					return;
+				}
+				
 				if( room.password != "" ){
 					if( request.password != room.password ){
 						var response = {type:"JOIN", ok:false, message:"incorrect password"};
@@ -218,7 +224,7 @@ wss.on("connection", function(conn) {
 				
 				if( room.state == "waiting for players" && roomPlayerCount(conn.player.roomname) >= 2 ){
 					var allready = true;
-					for( playerid in room.players ){
+					for( var playerid in room.players ){
 						if( room.players[playerid].ready == false ){
 							allready = false;
 							break;
