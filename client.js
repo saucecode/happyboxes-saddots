@@ -219,7 +219,7 @@ function drawBoard(){
 		}
 	}
 	
-	for( index in board.lines ){
+	for( var index in board.lines ){
 		var x = board.offset + board.lines[index][0]*board.gap;
 		var y = board.offset + board.lines[index][1]*board.gap;
 		if( board.lines[index][2] == 0 ){
@@ -227,6 +227,13 @@ function drawBoard(){
 		}else{
 			context.fillRect(x-1,y, 2, board.gap);
 		}
+	}
+	
+	// Draw player ID in captured boxes
+	for( var index in board.captures ){
+		var x = board.offset + board.captures[index][0]*board.gap;
+		var y = board.offset + board.captures[index][1]*board.gap;
+		context.fillText("" + board.captures[index][2], x+2, y+10);
 	}
 }
 
