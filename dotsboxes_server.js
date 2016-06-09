@@ -20,19 +20,22 @@ wss.on("connection", function(conn) {
 		console.log("Connection closed.");
 		if( !("player" in conn) ) return; // if connection hasn't made a SPECTATE or JOIN request
 		
-		// TODO 
-		/* if( conn.player.playerid == rooms[conn.player.roomname].whose_turn ){
-			gotoNextTurn(conn.player.roomname);
-			if( roomPlayerCount(conn.player.roomname) > 2 ){
-				
+		var room = rooms[conn.player.roomname];
+		
+		if( conn.player.playerid == room.whose_turn ){
+			var playerCount = roomPlayerCount(room.roomname);
+			if( playerCount > 2 ){
+				gotoNextTurn(room.roomname);
 			}
-		} */
+		}
 		
 		var dropPacket = {type:"REMOVE", playerid:conn.player.playerid, message:"connection was dropped"};
 		
 		delete rooms[conn.player.roomname].players[conn.player.playerid];
 		sendToRoom(JSON.stringify(dropPacket), conn.player.roomname);
 		console.log("Deleted player.");
+		
+		checkGameEnd(room.roomname);
 	});
 	
 	conn.on("message", function(message){
@@ -342,6 +345,49 @@ function checkGameStart(roomname){
 		sendToRoom(JSON.stringify(packet), roomname);
 		
 	}
+}
+
+function checkGameEnd(roomname){
+	// Check 3 conditions: One player left, no players left, all boxes claimed.
+	var room = rooms[roomname];
+	
+	if( room.state != "started" ){
+		return;
+	}
+	
+	// no more moves - all boxes claimed
+	if( room.captures.length == (room.width-1)*(room.height-1) ){
+		var scores = calculateScores(roomname);
+		if( scores.result == "win" ){
+			room.state = "ended";
+			var response = {type:"GAMESTATE", state:room.state, winnerid:scores.winnerid};
+			sendToRoom(JSON.stringify(response), roomname);
+			return;
+			
+		}else if(scores.result == "tie"){
+			room.state = "tied";
+			var response = {type:"GAMESTATE", state:room.tie, winnerid:score.winnerids};
+			sendToRoom(JSON.stringify(response), roomname);
+			return;
+			
+		}
+		
+	}
+	
+	// one player remaining
+	if( roomPlayerCount(roomname) == 1 ){
+		room.state = "ended";
+		var response = {type:"GAMESTATE", state:room.state, winnerid:scores.winnerid};
+		sendToRoom(JSON.stringify(response), roomname);
+		return;
+	}
+	
+	// TODO no players remaining
+}
+
+function calculateScores(roomname){
+	// TODO !!
+	// return {playerid:playerscore, 0:4, 1:12, ..., result:"win|tie", winnerid:1, winnerids:[1,3]}
 }
 
 function gotoNextTurn(roomname){
