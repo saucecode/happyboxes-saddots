@@ -251,8 +251,8 @@ wss.on("connection", function(conn) {
 				
 				if( room.state == "waiting for players" && roomPlayerCount(conn.player.roomname) >= 2 ){
 					var allready = true;
-					for( var playerid in room.players ){
-						if( room.players[playerid].ready == false ){
+					for( var index in room.players ){
+						if( room.players[index].ready == false ){
 							allready = false;
 							break;
 						}
@@ -313,7 +313,7 @@ wss.on("connection", function(conn) {
 				// Send the next turn packet (do not send TURN packets on a capture)
 				if( captureTurn ){
 					console.log("a capture happened! " + JSON.stringify(captured));
-					for( index in captured ){
+					for( var index in captured ){
 						captured[index].push(conn.player.playerid);
 						room.captures.push(captured[index]);
 					
@@ -343,8 +343,8 @@ function checkGameStart(roomname){
 	// check if all players are still ready
 	var room = rooms[roomname];
 	var playersReady = true;
-	for( playerid in room.players ){
-		if( room.players[playerid].ready == false ){
+	for( var index in room.players ){
+		if( room.players[index].ready == false ){
 			playersReady = false;
 			break;
 		}
@@ -459,8 +459,8 @@ function gotoNextTurn(roomname){
 function getNextTurnPlayerID(currentTurnID, roomname){
 	var room = rooms[roomname];
 	var actual_players = [];
-	for( var playerid in room.players ){
-		if( room.players[playerid].isplayer ) actual_players.push(playerid);
+	for( var index in room.players ){
+		if( room.players[index].isplayer ) actual_players.push(room.players[index].playerid);
 	}
 	
 	if( currentTurnID == -1 ) return actual_players[0]; // -1 indicates first turn of the game
