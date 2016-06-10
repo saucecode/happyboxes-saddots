@@ -24,7 +24,7 @@ rooms = {
 		
 	width:3,
 	height:3,
-	lines:[],
+	lines:[[0,0,0]],
 	captures:[]
 	}
 };
@@ -388,7 +388,7 @@ function checkGameEnd(roomname){
 			
 		}else if(scores.result == "tie"){
 			room.state = "tied";
-			var response = {type:"GAMESTATE", state:room.tie, winnerid:score.winnerids};
+			var response = {type:"GAMESTATE", state:room.state, winnerids:scores.winnerids};
 			sendToRoom(JSON.stringify(response), roomname);
 			return;
 			
