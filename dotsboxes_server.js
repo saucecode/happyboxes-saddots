@@ -11,7 +11,23 @@ var WebSocket = require('ws').WebSocket;
 wss = new WebSocketServer({port:25565});
 PLAYERID_COUNT = 0;
 
-rooms = {};
+rooms = {
+	// DEBUG DEBUG DEBUG
+	asdf: {
+	roomname:"asdf",
+	state:"waiting for players",
+	players:[],
+	whose_turn:-1,
+	PLAYERID_COUNT:0,
+	password:"",
+	admin_token:randomString(12),
+		
+	width:3,
+	height:3,
+	lines:[],
+	captures:[]
+	}
+};
 
 wss.on("connection", function(conn) {
 	console.log("Conneciton opened.");
@@ -65,7 +81,7 @@ wss.on("connection", function(conn) {
 					return;
 				}
 				
-				if( request.width < 5 || request.height < 5 || request.width > 50 || request.height > 50 ){
+				if( request.width < 2 || request.height < 2 || request.width > 50 || request.height > 50 ){
 					var response = {type:"CREATE", ok:false, message:"invalid dimensions"};
 					conn.send(JSON.stringify(response));
 					return;
@@ -259,6 +275,7 @@ wss.on("connection", function(conn) {
 				
 				var room = rooms[conn.player.roomname];
 				
+				if( room.state != "started" ) return;
 				// Check move is in player's turn
 				if( conn.player.playerid != room.whose_turn ) return;
 				
@@ -310,7 +327,11 @@ wss.on("connection", function(conn) {
 					}
 					
 				}else{
-					gotoNextTurn( roomname );
+					gotoNextTurn( room.roomname );
+				}
+				
+				if( room.captures.length == (room.width-1)*(room.height-1) ){
+					checkGameEnd(room.roomname);
 				}
 				
 				break;
@@ -336,7 +357,7 @@ function checkGameStart(roomname){
 		sendToRoom(JSON.stringify(packet), roomname);
 		
 		// send the first TURN packet
-		gotoNextTurn( roomname );
+		gotoNextTurn( room.roomname );
 		
 	}else{
 		// "waiting for players" again
@@ -357,7 +378,8 @@ function checkGameEnd(roomname){
 	
 	// no more moves - all boxes claimed
 	if( room.captures.length == (room.width-1)*(room.height-1) ){
-		var scores = calculateScores(roomname);
+		var scores = calculateFinalScores(roomname);
+		console.log("calculated final scores: " + JSON.stringify(scores));
 		if( scores.result == "win" ){
 			room.state = "ended";
 			var response = {type:"GAMESTATE", state:room.state, winnerid:scores.winnerid};
@@ -385,15 +407,51 @@ function checkGameEnd(roomname){
 	// TODO no players remaining
 }
 
-function calculateScores(roomname){
-	// TODO !!
-	// return {playerid:playerscore, 0:4, 1:12, ..., result:"win|tie", winnerid:1, winnerids:[1,3]}
+function calculateFinalScores(roomname){
+	// TODO Clean this mess up
+	var result = {scores:{}};
+	var room = rooms[roomname];
+	
+	// Add up captures of all players
+	for( var index in room.players ){
+		result.scores[room.players[index].playerid] = 0;
+	}
+	
+	for( var index in room.captures ){
+		var capture = room.captures[index];
+		result.scores[capture[2]] += 1;
+	}
+	
+	// Determine highest score
+	var highestScore = 0;
+	for( var index in result.scores ){
+		if( result.scores[index] > highestScore ) highestScore = result.scores[index];
+	}
+	
+	// Array of player IDs with this score
+	var winners = [];
+	for( var index in result.scores ){
+		if( result.scores[index] >= highestScore ) winners.push(index);
+	}
+	
+	if( winners.length == 1 ){
+		console.log("one winner to rule them all");
+		result.result = "win";
+		result.winnerid = winners[0];
+	}else{
+		console.log("determined winners: " + JSON.stringify(winners));
+		result.result = "tie";
+		result.winnerids = winners;
+	}
+	
+	return result;
+	// return {scores:{playerid:playerscore, 0:4, 1:12, ...}, result:"win|tie", winnerid:1, winnerids:[1,3]}
 }
 
 function gotoNextTurn(roomname){
 	var room = rooms[roomname];
 	room.whose_turn = getNextTurnPlayerID(room.whose_turn, roomname);
-	var turnPacket = {type:"TURN", playerid:whose_turn};
+	var turnPacket = {type:"TURN", playerid:room.whose_turn};
 	sendToRoom(JSON.stringify(turnPacket), roomname);
 }
 
